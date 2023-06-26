@@ -1,6 +1,12 @@
 'use strict'
 
 class Webrtc extends EventTarget {
+  /**
+   *
+   * @param {import('socket.io').Socket} socket
+   * @param {*} pcConfig
+   * @param {*} logging
+   */
   constructor(
     socket,
     pcConfig = null,
@@ -8,10 +14,17 @@ class Webrtc extends EventTarget {
   ) {
     super()
     this.room
+    /**
+     * @type {import('socket.io').Socket}
+     */
     this.socket = socket
     this.pcConfig = pcConfig
 
     this._myId = null
+    /**
+     * 所有的Peer链接
+     * @type {{string: RTCPeerConnection}}
+     */
     this.pcs = {} // Peer connections
     this.streams = {}
     this.currentRoom
@@ -19,6 +32,9 @@ class Webrtc extends EventTarget {
     this.isReady = false // At least 2 users are in room
     this.isInitiator = false // Initiates connections if true
     this._isAdmin = false // Should be checked on the server
+    /**
+     * @type {MediaStream}
+     */
     this._localStream = null
 
     // Manage logging
@@ -70,7 +86,11 @@ class Webrtc extends EventTarget {
       })
     }
   }
-
+  /**
+   * 加入会议室
+   * @param {string} room
+   * @returns
+   */
   joinRoom(room) {
     if (this.room) {
       this.warn('Leave current room before joining a new one')
@@ -134,11 +154,12 @@ class Webrtc extends EventTarget {
       this.log('Create peer connection to ', socketId)
 
       this._createPeerConnection(socketId)
-      this.pcs[socketId].addStream(this._localStream)
+      for (const track of this._localStream.getTracks()) {
+        this.pcs[socketId].addTrack(track, this._localStream)
+      }
 
       if (this.isInitiator) {
         this.log('Creating offer for ', socketId)
-
         this._makeOffer(socketId)
       }
     } else {
@@ -238,7 +259,7 @@ class Webrtc extends EventTarget {
         return
       }
 
-      // Avoid dublicate connections
+      // Avoid duplicate connections
       if (
         this.pcs[socketId] &&
         this.pcs[socketId].connectionState === 'connected'
@@ -246,6 +267,7 @@ class Webrtc extends EventTarget {
         this.log('Connection with ', socketId, 'is already established')
         return
       }
+      console.log(message, socketId)
 
       switch (message.type) {
         case 'gotstream': // user is ready to share their stream
@@ -300,7 +322,7 @@ class Webrtc extends EventTarget {
       //     socketId
       // );
 
-      this.log('Created RTCPeerConnnection for ', socketId)
+      this.log('Created RTCPeerConnection for ', socketId)
     } catch (error) {
       this.error('RTCPeerConnection failed: ' + error.message)
 
@@ -343,7 +365,6 @@ class Webrtc extends EventTarget {
    */
   _makeOffer(socketId) {
     this.log('Sending offer to ', socketId)
-
     this.pcs[socketId].createOffer(
       this._setSendLocalDescription.bind(this, socketId),
       this._handleCreateOfferError
@@ -379,11 +400,18 @@ class Webrtc extends EventTarget {
       error: new Error(`Session description error: ${error.toString()}`),
     })
   }
-
+  /**
+   * rtc事件流媒体数据处理
+   * @param {*} socketId
+   * @param {*} event
+   */
   _handleOnTrack(socketId, event) {
     this.log('Remote stream added for ', socketId)
 
-    if (this.streams[socketId]?.id !== event.streams[0].id) {
+    if (
+      event.streams[0] &&
+      this.streams[socketId]?.id !== event.streams[0].id
+    ) {
       this.streams[socketId] = event.streams[0]
 
       this._emit('newUser', {

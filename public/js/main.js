@@ -1,5 +1,4 @@
 'use strict'
-
 const socket = io.connect()
 
 const localVideo = document.querySelector('#localVideo-container video')
@@ -168,8 +167,8 @@ webrtc.addEventListener('error', (e) => {
  * Handle notifications
  */
 webrtc.addEventListener('notification', (e) => {
-  const notif = e.detail.notification
-  console.log(notif)
+  const notice = e.detail.notification
+  console.log(notice)
 
-  notify(notif)
+  notify(notice)
 })
