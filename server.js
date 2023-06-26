@@ -1,9 +1,16 @@
 const path = require('path')
+const fs = require('fs')
 const express = require('express')
 const app = express()
 const socketIO = require('socket.io')
+const https = require('https')
 
-const port = process.env.PORT || 8080
+const privateKey = fs.readFileSync('./localhost+3-key.pem')
+const certificate = fs.readFileSync('./localhost+3.pem')
+
+const server = https.createServer({ key: privateKey, cert: certificate }, app)
+
+const port = process.env.PORT || 18081
 const env = process.env.NODE_ENV || 'development'
 
 // Redirect to https
@@ -17,7 +24,6 @@ app.get('*', (req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.static(path.join(__dirname, 'node_modules')))
 
-const server = require('http').createServer(app)
 server.listen(port, () => {
   console.log(`listening on port ${port}`)
 })
@@ -31,11 +37,12 @@ io.sockets.on(
   'connection',
   /**
    *
-   * @param {import('socket.io').Socket} socket
+   * @param {import('socket.io').Socket} 客户端 socket
    */
   function (socket) {
     /**
      * Log actions to the client
+     * 输出日志
      */
     function log() {
       const array = ['Server:']
@@ -45,24 +52,22 @@ io.sockets.on(
 
     /**
      * Handle message from a client
-     * If toId is provided message will be sent ONLY to the client with that id
-     * If toId is NOT provided and room IS provided message will be broadcast to that room
-     * If NONE is provided message will be sent to all clients
+     * 处理来自客户端的消息
+     * If toId is provided message will be sent ONLY to the client with that id 如果有toid，则发给指定的人
+     * If toId is NOT provided and room IS provided message will be broadcast to that room，如果没toid，和房间号，则在房间内广播
+     * If NONE is provided message will be sent to all clients，如果都没，则发给所有的客户端
      */
     socket.on('message', (message, toId = null, room = null) => {
       log('Client ' + socket.id + ' said: ', message)
 
       if (toId) {
         console.log('From ', socket.id, ' to ', toId, message.type)
-
         io.to(toId).emit('message', message, socket.id)
       } else if (room) {
         console.log('From ', socket.id, ' to room: ', room, message.type)
-
         socket.broadcast.to(room).emit('message', message, socket.id)
       } else {
         console.log('From ', socket.id, ' to everyone ', message.type)
-
         socket.broadcast.emit('message', message, socket.id)
       }
     })
