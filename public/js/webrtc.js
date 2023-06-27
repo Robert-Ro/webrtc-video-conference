@@ -239,7 +239,7 @@ class Webrtc extends EventTarget {
 
     // Logs from server
     this.socket.on('log', (log) => {
-      this.log.apply(console, log)
+      // this.log.apply(console, log)
     })
 
     /**
@@ -267,7 +267,6 @@ class Webrtc extends EventTarget {
         this.log('Connection with ', socketId, 'is already established')
         return
       }
-      console.log(message, socketId)
 
       switch (message.type) {
         case 'gotstream': // user is ready to share their stream
@@ -321,7 +320,7 @@ class Webrtc extends EventTarget {
       //     this,
       //     socketId
       // );
-
+      console.log(this.pcs[socketId])
       this.log('Created RTCPeerConnection for ', socketId)
     } catch (error) {
       this.error('RTCPeerConnection failed: ' + error.message)

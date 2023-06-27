@@ -64,7 +64,7 @@ joinBtn.addEventListener('click', () => {
 const setTitle = (status, e) => {
   const room = e.detail.roomId
 
-  console.log(`Room ${room} was ${status}`)
+  // console.log(`Room ${room} was ${status}`)
 
   notify(`Room ${room} was ${status}`)
   document.querySelector('h1').textContent = `Room: ${room}`
@@ -99,7 +99,7 @@ webrtc.addEventListener('kicked', () => {
 })
 
 webrtc.addEventListener('userLeave', (e) => {
-  console.log(`user ${e.detail.socketId} left room`)
+  // console.log(`user ${e.detail.socketId} left room`)
 })
 
 /**
@@ -158,7 +158,7 @@ webrtc.addEventListener('removeUser', (e) => {
  */
 webrtc.addEventListener('error', (e) => {
   const error = e.detail.error
-  console.error(error)
+  // console.error(error)
 
   notify(error)
 })
@@ -168,7 +168,7 @@ webrtc.addEventListener('error', (e) => {
  */
 webrtc.addEventListener('notification', (e) => {
   const notice = e.detail.notification
-  console.log(notice)
+  // console.log(notice)
 
   notify(notice)
 })

@@ -33,7 +33,7 @@ server.listen(port, () => {
  */
 const io = socketIO(server, {
   cors: {
-    origin: 'https://localhost:5043',
+    origin: '*',
     methods: ['GET', 'POST'],
   },
 })
